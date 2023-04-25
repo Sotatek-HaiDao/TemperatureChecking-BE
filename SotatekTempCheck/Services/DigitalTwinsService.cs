@@ -5,7 +5,7 @@ using System.Linq;
 using SotatekTempCheck.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Text.Json;
+using System;
 
 namespace SotatekTempCheck.Services
 {
@@ -17,6 +17,12 @@ namespace SotatekTempCheck.Services
         public DigitalTwinsService(IConfiguration configuration)
         {
             _configuration = configuration;
+            //var options = new DefaultAzureCredentialOptions()
+            //{
+            //    ExcludeInteractiveBrowserCredential = true
+            //};
+
+            //var cred = new DefaultAzureCredential(options);
             var cred = new ManagedIdentityCredential();
             client = new DigitalTwinsClient(
                 new Uri(_configuration["DigitalTwinsUrl"]),
@@ -28,25 +34,24 @@ namespace SotatekTempCheck.Services
         }
         public async Task<IEnumerable<TwinsModel>> GetListTwinsAsync()
         {
-            var list = client.QueryAsync<dynamic>("SELECT * FROM digitaltwins");
+            var list = client.QueryAsync<object>("SELECT * FROM digitaltwins");
             var ids = new List<TwinsModel>();
             if (list is not null)
             {
-                IAsyncEnumerator<dynamic> enumerator = list.GetAsyncEnumerator();
+                IAsyncEnumerator<object> enumerator = list.GetAsyncEnumerator();
                 try
                 {
                     while (await enumerator.MoveNextAsync())
                     {
-                        string json = JsonConvert.SerializeObject(enumerator.Current);
-                        JsonDocument document = JsonDocument.Parse(json);
+                        var data = (JObject)JsonConvert.DeserializeObject(enumerator.Current.ToString());
                         TwinsModel model = new TwinsModel();
-
-                        model.Id = document.RootElement.GetProperty("$dtId").GetString();
-                        model.ETag = document.RootElement.GetProperty("$etag").GetString();
-                        JsonElement metadataElement = document.RootElement.GetProperty("$metadata");
-                        model.Metadata.Model = metadataElement.GetProperty("$model").GetString();
-                        model.Metadata.lastUpdateTime = metadataElement.GetProperty("$lastUpdateTime").GetDateTime();
-
+                        model.Id = (string)data["$dtId"];
+                        model.ETag = (string)data["$etag"];
+                        var lastUpdateTime = (string)data["$metadata"]["$lastUpdateTime"];
+                        Metadata metadata = new Metadata();
+                        metadata.lastUpdateTime = DateTime.Parse(lastUpdateTime);
+                        metadata.Model = (string)data["$metadata"]["$model"];
+                        model.Metadata = metadata;
                         ids.Add(model);
                     }
                 }
@@ -60,17 +65,19 @@ namespace SotatekTempCheck.Services
 
         public async Task<TwinsModel> GetTempByTwinIdAsync(string twinId)
         {
-            var data = await client.GetDigitalTwinAsync<dynamic>(twinId);
-            string json = JsonConvert.SerializeObject(data.Value);
-            JsonDocument document = JsonDocument.Parse(json);
+            var twin = await client.GetDigitalTwinAsync<object>(twinId);
+            var data = (JObject)JsonConvert.DeserializeObject(twin.Value.ToString());
             TwinsModel model = new TwinsModel();
-
-            model.Id = document.RootElement.GetProperty("$dtId").GetString();
-            model.ETag = document.RootElement.GetProperty("$etag").GetString();
-            JsonElement metadataElement = document.RootElement.GetProperty("$metadata");
-            model.Metadata.Model = metadataElement.GetProperty("$model").GetString();
-            model.Metadata.lastUpdateTime = metadataElement.GetProperty("$lastUpdateTime").GetDateTime();
-            model.Temperature = document.RootElement.GetProperty("Temperature").GetDouble();
+            model.Id = (string)data["$dtId"];
+            model.ETag = (string)data["$etag"];
+            double temperature = 0;
+            Double.TryParse((string)data["Temperature"],out temperature);
+            model.Temperature = temperature;
+            var lastUpdateTime = (string)data["$metadata"]["$lastUpdateTime"];
+            Metadata metadata = new Metadata();
+            metadata.lastUpdateTime = DateTime.Parse(lastUpdateTime);
+            metadata.Model = (string)data["$metadata"]["$model"];
+            model.Metadata = metadata;
             return model;
         }
     }

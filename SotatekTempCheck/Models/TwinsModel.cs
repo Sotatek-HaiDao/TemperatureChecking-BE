@@ -19,7 +19,6 @@ namespace SotatekTempCheck.Models
         public string Model { get; set; }
         [JsonProperty("$lastUpdateTime")]
         public DateTime lastUpdateTime { get; set; }
-        public Temperature Temperature { get; set; }
     }
 
     public class Temperature
