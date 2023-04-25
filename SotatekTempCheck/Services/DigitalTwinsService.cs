@@ -4,6 +4,8 @@ using Azure.Identity;
 using System.Linq;
 using SotatekTempCheck.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace SotatekTempCheck.Services
 {
@@ -36,7 +38,16 @@ namespace SotatekTempCheck.Services
                     while (await enumerator.MoveNextAsync())
                     {
                         string json = JsonConvert.SerializeObject(enumerator.Current);
-                        ids.Add(JsonConvert.DeserializeObject<TwinsModel>(json));
+                        JsonDocument document = JsonDocument.Parse(json);
+                        TwinsModel model = new TwinsModel();
+
+                        model.Id = document.RootElement.GetProperty("$dtId").GetString();
+                        model.ETag = document.RootElement.GetProperty("$etag").GetString();
+                        JsonElement metadataElement = document.RootElement.GetProperty("$metadata");
+                        model.Metadata.Model = metadataElement.GetProperty("$model").GetString();
+                        model.Metadata.lastUpdateTime = metadataElement.GetProperty("$lastUpdateTime").GetDateTime();
+
+                        ids.Add(model);
                     }
                 }
                 finally
@@ -49,8 +60,18 @@ namespace SotatekTempCheck.Services
 
         public async Task<TwinsModel> GetTempByTwinIdAsync(string twinId)
         {
-            var data = await client.GetDigitalTwinAsync<TwinsModel>(twinId);
-            return data.Value;
+            var data = await client.GetDigitalTwinAsync<dynamic>(twinId);
+            string json = JsonConvert.SerializeObject(data.Value);
+            JsonDocument document = JsonDocument.Parse(json);
+            TwinsModel model = new TwinsModel();
+
+            model.Id = document.RootElement.GetProperty("$dtId").GetString();
+            model.ETag = document.RootElement.GetProperty("$etag").GetString();
+            JsonElement metadataElement = document.RootElement.GetProperty("$metadata");
+            model.Metadata.Model = metadataElement.GetProperty("$model").GetString();
+            model.Metadata.lastUpdateTime = metadataElement.GetProperty("$lastUpdateTime").GetDateTime();
+            model.Temperature = document.RootElement.GetProperty("Temperature").GetDouble();
+            return model;
         }
     }
 }
