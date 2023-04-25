@@ -23,13 +23,13 @@ namespace SotatekTempCheck.Services
                     Transport = new HttpClientTransport(singletonHttpClientInstance)
                 });
         }
-        public async Task<IEnumerable<string>> GetListTwinsAsync()
+        public async Task<IEnumerable<TwinsModel>> GetListTwinsAsync()
         {
-            var list = client.QueryAsync<string>("SELECT * FROM digitaltwins");
-            var ids = new List<string>();
+            var list = client.QueryAsync<TwinsModel>("SELECT * FROM digitaltwins");
+            var ids = new List<TwinsModel>();
             if (list is not null)
             {
-                IAsyncEnumerator<string> enumerator = list.GetAsyncEnumerator();
+                IAsyncEnumerator<TwinsModel> enumerator = list.GetAsyncEnumerator();
                 try
                 {
                     while (await enumerator.MoveNextAsync())
