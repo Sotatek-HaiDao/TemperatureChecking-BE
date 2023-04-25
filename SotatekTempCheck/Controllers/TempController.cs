@@ -17,13 +17,28 @@ namespace SotatekTempCheck.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTwins()
         {
-            return Ok(await _digitalTwinsService.GetListTwinsAsync());
+            try
+            {
+                return Ok(await _digitalTwinsService.GetListTwinsAsync());
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("{twinId}")]
         public async Task<IActionResult> GetTwinInfo(string twinId)
         {
-            return Ok(await _digitalTwinsService.GetTempByTwinIdAsync(twinId));
+            try
+            {
+                return Ok(await _digitalTwinsService.GetTempByTwinIdAsync(twinId));
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(ex.Message);
+            }
+            
         }
     }
 }
