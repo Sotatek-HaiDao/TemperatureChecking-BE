@@ -4,6 +4,7 @@ using Azure.Identity;
 using System.Linq;
 using SotatekTempCheck.Models;
 using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace SotatekTempCheck.Services
 {
@@ -15,7 +16,7 @@ namespace SotatekTempCheck.Services
         public DigitalTwinsService(IConfiguration configuration)
         {
             _configuration = configuration;
-            var cred = new ManagedIdentityCredential(clientId:"c90fe13d-ce18-417e-b0ed-d32009219b70");
+            var cred = new ManagedIdentityCredential();
             client = new DigitalTwinsClient(
                 new Uri(_configuration["DigitalTwinsUrl"]),
                 cred,
@@ -35,7 +36,7 @@ namespace SotatekTempCheck.Services
                 {
                     while (await enumerator.MoveNextAsync())
                     {
-                        string json = JsonConvert.SerializeObject(enumerator.Current);
+                        string json = JsonDocument.Parse(enumerator.Current);
                         ids.Add(JsonConvert.DeserializeObject<TwinsModel>(json));
                     }
                 }
