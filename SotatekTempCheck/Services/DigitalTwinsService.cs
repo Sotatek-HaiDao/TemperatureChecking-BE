@@ -1,6 +1,7 @@
 ﻿using Azure.Core.Pipeline;
 using Azure.DigitalTwins.Core;
 using Azure.Identity;
+using System.Linq;
 using SotatekTempCheck.Models;
 
 namespace SotatekTempCheck.Services
@@ -28,9 +29,17 @@ namespace SotatekTempCheck.Services
             var ids = new List<string>();
             if (list is not null)
             {
-                await foreach (string id in list)
+                IAsyncEnumerator<string> enumerator = list.GetAsyncEnumerator();
+                try
                 {
-                    ids.Add(id);
+                    while (await enumerator.MoveNextAsync())
+                    {
+                        ids.Add(enumerator.Current);
+                    }
+                }
+                finally
+                {
+                    await enumerator.DisposeAsync();
                 }
             }
             return ids;
