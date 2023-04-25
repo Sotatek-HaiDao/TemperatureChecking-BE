@@ -4,7 +4,6 @@ using Azure.Identity;
 using System.Linq;
 using SotatekTempCheck.Models;
 using Newtonsoft.Json;
-using System.Text.Json;
 
 namespace SotatekTempCheck.Services
 {
@@ -36,7 +35,7 @@ namespace SotatekTempCheck.Services
                 {
                     while (await enumerator.MoveNextAsync())
                     {
-                        string json = JsonDocument.Parse(enumerator.Current);
+                        string json = JsonConvert.SerializeObject(enumerator.Current);
                         ids.Add(JsonConvert.DeserializeObject<TwinsModel>(json));
                     }
                 }
