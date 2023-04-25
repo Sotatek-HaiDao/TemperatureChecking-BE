@@ -4,7 +4,7 @@ namespace SotatekTempCheck.Services
 {
     public interface IDigitalTwinsService
     {
-        Task<IEnumerable<TwinsModel>> GetListTwinsAsync();
+        Task<IEnumerable<dynamic>> GetListTwinsAsync();
         Task<TwinsModel> GetTempByTwinIdAsync(string twinId);
     }
 }
