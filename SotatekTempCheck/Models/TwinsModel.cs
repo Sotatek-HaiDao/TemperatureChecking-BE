@@ -7,6 +7,7 @@ namespace SotatekTempCheck.Models
         [JsonProperty("$dtId")]
         public string Id { get; set; }
         public double Temperature { get; set; }
+        public double Humidity { get; set; }
         [JsonProperty("$etag")]
         public string ETag { get; set; }
         [JsonProperty("$metadata")]

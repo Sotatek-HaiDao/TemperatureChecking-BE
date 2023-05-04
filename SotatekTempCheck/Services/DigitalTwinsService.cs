@@ -71,8 +71,11 @@ namespace SotatekTempCheck.Services
             model.Id = (string)data["$dtId"];
             model.ETag = (string)data["$etag"];
             double temperature = 0;
+            double humidity = 0;
             Double.TryParse((string)data["Temperature"],out temperature);
+            Double.TryParse((string)data["Humidity"], out humidity);
             model.Temperature = temperature;
+            model.Humidity = humidity;
             var lastUpdateTime = (string)data["$metadata"]["$lastUpdateTime"];
             Metadata metadata = new Metadata();
             metadata.lastUpdateTime = DateTime.Parse(lastUpdateTime);
